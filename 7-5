@@ -1,0 +1,106 @@
+ 利用DOS功能调用，编写程序完成以下功能：
+ 1. 从键盘读入字符串string1和string2
+ 2. 在string1中查找是否有string2，若有，则删除
+ 3. 显示删除结果
+
+data segment
+out1 db 'Input string1:$'
+out2 db 'Input string2:$'
+string1 db 20,0,20 dup('$')    ;string1长度1-20
+string2 db 10,0, 10 dup('$')   ;string2长度1-10
+data ends
+
+code  segment
+assume cs:code,ds:data
+start:
+       mov ax,data
+       mov ds,ax
+
+       lea dx,out1
+       mov ah,09h        ;输出提示信息
+       int 21h
+
+       lea dx,string1  
+       mov ah,0ah             ;输入字符串string1
+       int 21h
+       
+       mov dl,0ah           ;换行
+       mov ah,2h 
+       int 21h
+
+       mov dx,offset out2
+       mov ah,09h          ;输出提示信息
+       int 21h               
+
+       lea dx,string2
+       mov ah,0ah          ;输入string2
+       int 21h
+
+       lea si,string1+1
+       mov ch,0
+       mov cl,[si]        ;string1的长度
+       lea di,string2+1
+       mov bh,0
+       mov bl,[di]       ;strin2的长度
+       inc si
+       inc di
+       mov bp,0        ;bp累计比较次数
+
+search:
+       mov al,[si]
+       cmp al,[di]
+       jz look        ;当前的字母相同，跳转到look执行，比较下一个字符      
+       lea di,string2+2  ;当前字母不同，string2退回首字母
+       mov bp,0          ;清零
+       jmp again       ;比较下一个string1的字符
+
+look: 
+       inc bp
+       cmp bx,bp
+       jz  delete       ;string1中有string2，删除string2
+       inc di           ;string2还没有遍历完
+       
+again:
+       inc si
+       loop search
+       jmp exit 
+
+delete:                ;从string1中删除string2
+       push cx
+       push di 
+       push si          ;保护现场
+       inc si
+       lea di,string1+1
+       mov cl,[di]
+       sub cl,bl
+       mov di,si        ;设置循环条件和起始位置
+       sub di,bx
+
+del:   
+       mov bp,0
+       mov al,[si]
+       mov [di],al      ;将后面的内容向前移
+       inc si
+       inc di
+       loop del
+
+       pop si 
+       pop di
+       pop cx        ;恢复现场
+       loop search
+
+exit:                      ;输出结果并退出
+       mov dl,0ah           ;换行
+       mov ah,2h 
+       int 21h
+
+       mov dx,offset string1+2
+       mov ah,09h         
+       int 21h               
+
+
+       mov ah,4ch
+       int 21h
+
+code ends
+end start
