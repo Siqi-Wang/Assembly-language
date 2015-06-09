@@ -11,3 +11,64 @@
 (5)	查询某个单词的同义词(如accept: approve)；
 (6)	查询某个单词的反义词(如win: lose)；
 以上结果均需显示
+
+
+以下为汇编代码：
+scroll macro   n,ulr,ulc,lrr,lrc,att ;宏定义
+        mov ah,6       ;清屏或上卷
+        mov al,n       ;n=上卷行数；n=0时，整个窗口空白
+        mov ch,ulr     ;左上角行号
+        mov cl,ulc     ;左上角列号
+        mov dh,lrr     ;右下角行号
+        mov dl,lrc     ;右下角列号
+        mov bh,att     ;卷入行属性
+        int 10h   
+endm
+
+locate  macro  cury,curx    
+          mov ah,2            ;置光标位置
+          mov dh,cury         ;行号
+          mov dl,curx         ;列号
+          mov bh,0            ;当前页
+          int 10h    
+endm
+
+Sout macro address1,address2   ;字符串输出
+       push dx
+       push ds
+       mov ax,address1
+       mov ds,ax
+       lea dx,address2 
+       mov ah,9
+       int 21h
+       pop ds
+       pop dx
+endm
+
+Show macro address
+       mov ax,data2
+       mov ds,ax
+       lea dx,address
+       mov ah,9
+       int 21h
+       Sout data1,out0
+
+       add dx,8
+       int 21h
+       Sout data1,out0
+       
+       add dx,104
+       int 21h
+       Sout data1,out0
+  
+       add dx,8
+       int 21h
+endm
+
+Sin macro 
+        mov ax,data2
+        mov ds,ax
+        lea dx,word0
+        mov ah,0ah
+        int 21h 
+endm
