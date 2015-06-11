@@ -218,3 +218,98 @@ First1Menu:
        Sout data1,out7
        locate 10,0
        ret
+
+
+First2Menu:
+       call cls
+       locate 5,12
+       Sout data1,out2
+       locate 7,16
+       Sout data1,out8
+       locate 8,16
+       Sout data1,out9
+       locate 9,16
+       Sout data1,out10
+       locate 10,16
+       Sout data1,out11
+       locate 11,0
+       ret 
+
+cls:
+    scroll 0,0,0,24,79,02
+    ret
+
+Insertf:
+        call cls
+        locate 5,12
+        Sout data1,insert1
+        lea si,word0
+        call clean
+        Sin
+        ;定位单词输入的位置
+        mov ax,data2   
+        mov ds,ax
+        lea di,word1
+        mov cx,10
+
+loop1:
+        push cx
+        lea si,word0+1
+        mov cl,[si]
+        mov ch,0
+        mov ax,cx
+        inc si
+
+loop2:  mov bl,[si]
+        cmp bl,[di]
+        ja next1
+        jb next2
+        inc si
+        inc di
+        loop loop2
+        locate 6,12
+        Sout data1,insert5
+        pop cx
+        jmp exitinsertf
+
+next1:  add di,cx
+        sub di,ax
+        mov bl,[di]
+        cmp bl,24h
+        jz next4      ;遇到$插入
+        jmp next3
+next2:           
+        add di,cx
+        sub di,ax
+        pop cx
+        jmp next
+     
+next3:              
+        pop cx
+        add di,80h
+        loop loop1
+
+next4:
+       pop cx
+       jmp next
+
+next:   
+        call backmove    ;后移
+        mov si,di
+        call clean       ;清零
+        call move        ;写入
+        ;定位结束，输入解释、近义词、反义词
+        
+        locate 6,12         ;输入解释
+        Sout data1,insert2
+        Sin
+        add di,8
+        call move
+
+        locate 7,12     ;输入近义词
+        Sout data1,insert3 
+        lea si,word0    ;清除缓冲区
+        call clean
+        Sin
+        add di,104
+        call move
