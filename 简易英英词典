@@ -72,3 +72,149 @@ Sin macro
         mov ah,0ah
         int 21h 
 endm
+
+data1 segment        ;菜单信息
+ out0 db '      $'
+ out1 db 'Welcome to use the dictionary which is maded by Siqi!!$'
+ out2 db 'You can input the number to choose funtion(Input 0 to exit):$'
+ out3 db '1.Modify the dictionary;$'
+ out4 db '2.Search the dictionary;$'
+ out5 db '1.Insert a word and its explain, synonym,antonym;$'
+ out6 db '2.Modify the explain of a word;$'
+ out7 db '3.Delete a word and its explain$'
+ out8 db '1.Fuzzy query;$'   ;模糊查询
+ out9 db '2.Search explain;$'  ;查找解释
+ out10 db '3.Search synonym;$'  ;查找同义词
+ out11 db '4.Search antonym$'    ;查找反义词
+ insert1 db 'Input the word:$'
+ insert2 db 'Input the explain:$'
+ insert3 db 'Input the synonym:$'
+ insert4 db 'Input the antonym:$'
+ insert5 db 'The word has been in the dictionary!$'
+ insert6 db 'Now the dictionary is: $'
+ modify1 db 'The word is not in the dictionary!$'
+ modify2 db 'Before modify the explain of word is:$ '
+ modify3 db 'Input the explain of the word:$'
+ modify4 db 'After modify the explain of word is:$'
+ explain1 db 'The word explain is:$'
+ synonym1 db 'The word synonym is:$'
+ antonym1 db 'the word antonym is:$'
+ data1 ends
+ 
+data2 segment   ;字典数据的存储单元
+ word0 db 126,0,126 dup('$')   ;输入数据缓冲区 
+ word1 db 'enable$$','to provide with the means or opportunity; to make possible, practical, or easy',26 dup ('$'),'allow$$$','prevent$'
+ word2 db 'enabled$','render capable or able for some task',68 dup('$'),'permit$$','prevent$'
+ word3 db 'enact$$$','order by virtue of superior authority',67 dup('$'),'pass$$$$','reject$$'
+ word4 db 'good$$$$','good means pleasant or enjoyable',72 dup('$'),'great$$$','bad$$$$$'
+ word5 db 128 dup('$')
+ word6 db 128 dup('$')
+ word7 db 128 dup('$')
+ word8 db 128 dup('$')
+ word9 db 128 dup('$')
+ word10 db 128 dup('$')
+ data2 ends
+
+
+code  segment
+assume cs:code,ds:data1
+start:
+       call MainMenu
+       call choose
+       cmp al,31h
+       jz first1
+       cmp al,32h
+       jz first2
+       jmp exit
+
+first1:
+       call First1Menu
+       call choose
+       cmp al,31h
+       jz Insert
+       cmp al,32h
+       jz Modify
+       cmp al,33h
+       jz Delete
+       jmp exit
+
+
+Insert:
+      call Insertf
+      jmp exit
+
+Modify:
+     call Modifyf
+     jmp exit
+
+
+Delete:
+     call Deletef
+     jmp exit
+
+first2:
+       call First2Menu
+       call choose
+       cmp al,31h
+       jz Fuzzy 
+       cmp al,32h
+       jz Explain
+       cmp al,33h
+       jz Synonym
+       cmp al,34h
+       jz Antonym
+       jmp exit
+
+Fuzzy:
+      call Fuzzyf
+      jmp exit
+
+Explain:
+        call Explainf
+        jmp exit
+Synonym:
+        call Synonymf
+        jmp exit
+Antonym:
+        call Antonymf
+        jmp exit
+
+
+
+exit: 
+       mov ax,4c00h
+       int 21h
+
+
+;以下是函数部分
+
+choose:
+    mov ah,01
+    int 21h
+    ret
+
+MainMenu:
+       call cls
+       locate 4,12
+       Sout data1,out1
+       locate 5,10
+       Sout data1,out2
+       locate 7,16
+       Sout data1,out3
+       locate 8,16
+       Sout data1,out4
+       locate 9,0
+       ret
+
+First1Menu:
+       call cls
+       locate 5,16
+       Sout data1,out2
+       locate 7,16
+       Sout data1,out5
+       locate 8,16
+       Sout data1,out6
+       locate 9,16
+       Sout data1,out7
+       locate 10,0
+       ret
