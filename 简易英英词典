@@ -313,3 +313,296 @@ next:
         Sin
         add di,104
         call move
+
+        locate 8,12      ;输入反义词    
+        Sout data1,insert4
+        lea si,word0    ;清除缓冲区
+        call clean
+        Sin
+        add di,8
+        call move
+
+        call cls
+        locate 4,10
+        Sout data1,insert6
+        locate 5,0
+        Show word1
+        locate 8,0
+        Show word2
+        locate 11,0
+        Show word3
+        locate 13,0
+        Show word4
+        locate 15,0
+        Show word5
+   
+exitinsertf: ret
+
+
+move:     push di          ;将缓冲区的字符输入字典
+          push ds
+          mov ch,0
+          lea si,word0+1
+          mov cl,[si]
+          inc si
+loopmove: mov al,[si]
+          mov [di],al
+          inc si
+          inc di
+          loop loopmove
+          pop ds
+          pop di
+ret
+
+backmove:              
+         push di   ;插入时后面的数组向后移
+         push ds
+         mov cx,180h
+         add di,01ffh
+         mov si,di
+         sub si,80h
+         
+lopback: 
+         mov al,[si]
+         mov [di],al
+         dec si
+         dec di
+         loop lopback
+         pop ds
+         pop di
+ret  
+
+clean:            ;把空出来的空间填上$符号
+      
+      mov cx,80h
+    s:mov byte ptr [si],24h
+      inc si
+      loop s
+ret 
+
+Modifyf:
+       call Search
+       cmp bl,0         ;bl为0说明单词不在字典中
+       jz exitmodifyf
+       locate 4,10
+       Sout data1,modify2
+       
+       mov dx,di
+       add dx,8      ;输出当前解释
+       mov ah,9
+       int 21h
+
+       locate 7,10
+       Sout data1,modify3    ;输入解释
+       Sin 
+       call cls
+      
+       mov si,di
+       mov cx,104      ;清除原来的解释
+    s0:mov byte ptr [si],24h
+       inc si
+       loop s0
+      
+       call move
+       Sout data1,modify4
+      
+       mov dx,di
+       mov ah,9
+       int 21h
+exitmodifyf:  ret
+
+Deletef:
+         call Search
+         cmp bl,0
+         jnz yes
+         jmp exitdeletef
+
+     yes:call fowardmove
+        call cls
+        locate 4,10
+        Sout data1,insert6
+        locate 5,0
+        Show word1
+        locate 8,0
+        Show word2
+        locate 11,0
+        Show word3
+        locate 13,0
+        Show word4
+exitdeletef: ret
+
+fowardmove:             ;删除的时候数组向前移
+         mov si,di
+         add si,80h
+         mov cx,200h
+      sd:mov al,[si]
+         mov [di],al
+         inc di
+         inc si
+         loop sd
+ret
+
+Fuzzyf:
+        call cls
+        locate 5,12
+        Sout data1,insert1
+        lea si,word0
+        call clean
+        Sin
+        call cls
+        locate 6,10
+        mov ax,data2   
+        mov ds,ax
+        lea di,word1
+        mov cx,10
+        mov bh,0
+
+fuzzyfloop1:
+        push cx
+        lea si,word0+1
+        mov cl,[si] 
+        mov ch,0
+        mov ax,cx
+        inc si
+
+fuzzyfloop2:  
+        mov bl,[si]
+        cmp bl,[di]
+        jnz fuzzyfnext1
+        inc si
+        inc di
+        loop fuzzyfloop2
+        mov bh,1
+        jmp fuzzyfnext2
+
+fuzzyfnext1:
+        add di,cx
+        sub di,ax
+        mov bl,[di]
+        cmp bl,24h
+        jz fuzzyfnext    ;遇到'$'说明单词不在字典中，跳转
+        pop cx
+        add di,80h
+        loop fuzzyfloop1    ;循环结束
+        jmp fuzzyfnext
+
+fuzzyfnext2:
+        add di,cx
+        sub di,ax
+        mov dx,di
+        mov ah,9
+        int 21h                ;输出单词
+        Sout data1,out0
+        add di,80h
+        pop cx
+        loop fuzzyfloop1 
+
+
+fuzzyfnext:
+         pop cx
+         cmp bh,1
+         jz exitfuzzyf
+         locate 6,12
+         mov bl,0
+         Sout data1,modify1
+
+exitfuzzyf:ret
+
+
+Explainf:
+         call Search
+         cmp bl,0
+         jz exitexplianf
+         locate 4,10
+         Sout data1,explain1
+
+         mov dx,di
+         add dx,8      ;输出当前解释
+         mov ah,9
+         int 21h
+exitexplianf: ret 
+
+Synonymf:
+        call Search
+        cmp bl,0
+        jz exitsynonymf
+        locate 4,10
+        Sout data1,synonym1
+
+        mov dx,di
+        add dx,112
+        mov ah,9
+        int 21h
+exitsynonymf: ret
+
+Antonymf:
+ call Search
+        cmp bl,0
+        jz exitsynonymf
+        locate 4,10
+        Sout data1,antonym1
+
+        mov dx,di
+        add dx,120
+        mov ah,9
+        int 21h
+exitantoymf: ret
+
+
+Search:                   ;查找单词在当前字典的位置
+        call cls
+        locate 5,12
+        Sout data1,insert1
+        lea si,word0
+        call clean
+        Sin
+        call cls
+        mov ax,data2   
+        mov ds,ax
+        lea di,word1
+        mov cx,10
+
+searchloop1:
+        push cx
+        lea si,word0+1
+        mov cl,[si] 
+        mov ch,0
+        mov ax,cx
+        inc si
+
+searchloop2:  
+        mov bl,[si]
+        cmp bl,[di]
+        jnz searchnext1
+        inc si
+        inc di
+        loop searchloop2
+        jmp searchnext2
+
+
+searchnext1:
+        add di,cx
+        sub di,ax
+        mov bl,[di]
+        cmp bl,24h
+        jz searchnext    ;遇到'$'说明单词不在字典中，跳转
+        pop cx
+        add di,80h
+        loop searchloop1    ;循环结束
+
+searchnext:
+         pop cx
+         locate 6,12
+         mov bl,0
+         Sout data1,modify1
+         jmp searchexit
+
+searchnext2:
+         add di,cx
+         sub di,ax
+         pop cx
+
+searchexit:   ret
+
+code ends
+end start
