@@ -1,0 +1,315 @@
+功能要求：
+1.各科成绩的录入、修改和删除（10个学生，每人3门成绩，分别按学生存放。即学生编号*，语文成绩*，语文成绩名次，数学成绩*，数学成绩名次，英语成绩*，英语成绩名次，后面的三个单元存放该生总成绩、名次、平均成绩）带*号的为录入值
+2.排序：
+(1)	单科课程成绩排序(分数从高到低)：结果放到每门成绩之后的名次单元中
+(2)	总成绩排序(分数从高到低)：结果放到每个学生后面的名次单元中
+3查找：
+(1)	查询某位同学某课程成绩及名次;总成绩及名次.
+(2)	查询单科课程不及格同学名单
+4.统计：
+(1)	单科平均分
+(2)	总成绩平均分
+(3)	单科各分数段人数(60以下，60~70，70~80，80~90，90~100)
+以上结果放到新的单元中
+以上各操作结果需要显示
+
+scroll macro   n,ulr,ulc,lrr,lrc,att ;宏定义
+        mov ah,6       ;清屏或上卷
+        mov al,n       ;n=上卷行数；n=0时，整个窗口空白
+        mov ch,ulr     ;左上角行号
+        mov cl,ulc     ;左上角列号
+        mov dh,lrr     ;右下角行号
+        mov dl,lrc     ;右下角列号
+        mov bh,att     ;卷入行属性
+        int 10h   
+        endm
+
+locate  macro  cury,curx  
+          push dx  
+          mov ah,2            ;置光标位置
+          mov dh,cury         ;行号
+          mov dl,curx         ;列号
+          mov bh,0            ;当前页
+          int 10h
+          pop dx    
+          endm
+
+Sout macro address1,address2   ;字符串输出
+       push dx
+       push ds
+       push ax
+       mov ax,address1
+       mov ds,ax
+       lea dx,address2 
+       mov ah,9
+       int 21h
+       pop ax
+       pop ds
+       pop dx
+       endm
+
+NumOut macro 
+       push dx
+       mov dl,al
+       locate bl,8
+       Sout data1,student
+       mov ah,02h
+       int 21h
+       Sout data1,colon
+       pop dx
+       endm 
+
+
+data1 segment 
+ MainMenu1 db 'Welcome to use the Student Score management which is maded by Siqi!!$'
+ MainMenu2 db 'You can input the number to choose funtion(Input 0 to exit):$'
+ MainMenu3 db '1.Modify the data;$'
+ MainMenu4 db '2.Sort the data;$'
+ MainMenu5 db '3.Search the data;$'
+ MainMenu6 db '4.Statistics the data;$'
+ SearchMenu1 db 'Input the number to choose funtion(Input 0 to return parent directory):$'
+ SearchMenu2 db '1.Search somebody information$'
+ SearchMenu3 db '2.Search the student who fall text$'
+ ModifyMenu1 db '1.Insert the score of student;$'
+ ModifyMenu2 db '2.Modify the score of student;$'
+ ModifyMenu3 db '3.Delete the score of student;$'
+ Insertf1 db 'Input ten students Chinese,Math and English score:$'
+ Deletef1 db 'Input Y to ensure,N to back:$'
+ StatisticsMenu1 db '1.The average score of one subject;$'
+ StatisticsMenu2 db '2.The average score of all subject$;'
+ StatisticsMenu3 db '3.The number of students in every score section;$'
+ ChineseAverage1 db 'The average score of Chinese is :$'
+ MathAverage1 db 'The average score of Math is :$'
+ EnglishAverage1 db 'The average score of English is :$'
+ AllDate1 db 'The average score of all subject is:$'
+ SelectChinese  db '1.Chinese;$'
+ SelectMath db '2.Math;$'
+ SelectEnglish db '3.English;$'
+ LocateStudent1 db 'Please input the student number:$'
+ Search2f1 db 'Those students dont pass the exam:$'
+ ScoreSelation db '<60   60~70   70~80   80~90   90~100$'
+ student db 'student$'
+ colon db ': $'
+ Chinese db 'Chinese$'
+ Math db 'Math$'
+ English db 'English$'
+ Total db 'Total$'
+ Score1 db 'Score:$'
+ Rank  db 'Rank: $'
+ outhunred db '100$'
+ buffer1 db 5 dup('$')
+data1 ends
+
+
+data2 segment
+buffer db 16 dup ('$')
+student0 db '0',90,1,80,2,70,5 dup (0),5 dup ('$')
+student1 db '1',93,0,82,0,90,5 dup (0),5 dup ('$')
+student2 db '2',91,0,82,0,60,5 dup (0),5 dup ('$')
+student3 db '3',91,0,82,0,23,5 dup (0),5 dup ('$')
+student4 db '4',100,0,85,0,80,5 dup (0),5 dup ('$')
+student5 db '5',100,0,88,0,82,5 dup (0),5 dup ('$')
+student6 db '6',95,0,32,0,13,5 dup (0),5 dup ('$')
+student7 db '7',93,0,72,0,93,5 dup (0),5 dup ('$')
+student8 db '8',51,0,32,0,63,5 dup (0),5 dup ('$')
+student9 db '9',91,0,12,0,43,5 dup (0),5 dup ('$')
+ statisticsdata db 16 dup(0)
+data2 ends 
+
+
+
+code  segment
+assume cs:code
+start:
+          call MainMenu
+          call choose
+          cmp al,31h
+          jz Modify
+          cmp al,32h
+          jz Sort
+          cmp al,33h 
+          jz Search
+          cmp al,34h
+          jz Statistics
+          jmp exitmain
+
+Modify:   
+         call ModifyMenu
+         call choose
+         cmp al,31h
+         jz Insert
+         cmp al,33h
+         jz Delete
+         jmp start
+
+Sort:
+          call Sortf
+          jmp start
+
+Search:
+          call SearchMenu
+          call choose
+          cmp al,31h
+          jz Search1
+          cmp al,32h
+          jz Search2
+          jmp start
+
+Statistics:
+           call StatisticsMenu
+           call choose
+           cmp al,31h
+           jz SingalDataAverage
+           cmp al,32h
+           jz AllDate
+           cmp al,33h
+           jz SingalData
+           jmp start
+
+
+Insert: 
+         call Insertf
+         jmp Modify
+
+Delete:
+         call Deletef
+         jmp Modify
+
+Search1:  
+        call Search1f
+        jmp Search
+
+Search2:
+        call Search2f
+        jmp Search
+
+SingalDataAverage:
+         call SingalDataAveragef
+         jmp Statistics
+
+AllDate:
+          call AllDatef
+          jmp Statistics
+
+SingalData: 
+           call SingalDataf
+           jmp Statistics
+
+exitmain: 
+          mov ah,4ch
+          int 21h
+
+
+;以下是函数部分
+ 
+
+Insertf:                 ;把成绩输入，并且计算总成绩和平均成绩
+        call cls
+        locate 4,8
+        Sout data1 Insertf1
+        locate 5,18
+        Sout data1,Chinese
+        locate 5,27
+        Sout data1,Math
+        locate 5,33
+        Sout data1,English
+
+        mov ax,data2
+        mov ds,ax   
+        mov al,30h
+        mov bl,6
+        mov cx,0ah
+        lea dx,buffer
+loopmodify:
+        NumOut
+        mov si,1
+        mov ah,0ah
+        int 21h
+        call Save     ;将缓冲区的字符转化为整形存储在内存中
+        
+        add dx,5
+        add si,2
+        locate bl,27
+        mov ah,0ah
+        int 21h
+        call Save
+
+        add dx,5
+        add si,2
+        locate bl,33
+        mov ah,0ah
+        int 21h
+        call Save
+
+        inc al
+        inc bl
+        call Clean          ;清除缓冲区
+        loop loopmodify     ;循环
+
+        call StudentOut
+        mov si,1
+        call ShowSocref
+        mov si,3
+        call ShowSocref
+        mov si,5
+        call ShowSocref
+        mov ah,01
+        int 21h
+        ret
+
+
+ShowSocref:            ;显示所有成绩
+       mov ax,data1
+       mov es,ax
+       lea bp,student0
+       mov cx,10
+       mov ax,0
+       mov bl,6
+loopShowf:
+       mov al,ds:[bp]
+       cmp al,24h
+       jz Shownext
+       mov al,ds:[bp+si]
+       cmp al,64h
+       jz showhundred
+       lea di,buffer1+2
+       mov dl,10
+       call Cleanbuffer
+loopdiv:  
+       mov ah,0     
+       div dl
+       dec di
+       add ah,30h
+       mov es:[di],ah
+       cmp al,0
+       jnz loopdiv
+       call Location
+       Sout data1,buffer1
+       jmp Shownext
+showhundred:
+       call Location
+       Sout data1,outhunred     
+Shownext:  
+       inc bl
+       add bp,16
+       loop loopShowf
+       ret
+
+Cleanbuffer:
+         push ds
+         push ax
+         push cx
+         push  di
+         lea di,buffer1
+         mov cx,5
+         mov ax,data1
+         mov ds,ax
+loopclean: 
+         mov byte ptr [di],24h
+         inc di
+         loop loopclean
+         pop di
+         pop cx
+         pop ax
+         pop ds
+         ret
