@@ -313,3 +313,703 @@ loopclean:
          pop ax
          pop ds
          ret
+
+
+
+Deletef:                        ;删除学生信息
+          call LocateStudent
+          call ShowSingal
+          locate 6,10
+          Sout data1,Score1
+          locate 7,0
+          Sout data1,Deletef1
+          mov ah,1
+          int 21h
+          push ax
+          call cls
+          pop ax
+          cmp al,'y'
+          jz nextdeletef
+          jmp exitdeletef
+nextdeletef:
+           mov ax,data2
+           mov ds,ax
+           mov cx,10h
+loopdeletef:
+           mov byte ptr [si],24h
+           inc si
+           loop loopdeletef
+           call StudentOut
+           mov si,1
+           call ShowSocref
+           mov si,3
+           call ShowSocref
+           mov si,5
+           call ShowSocref
+exitdeletef:
+          locate 20,0
+          mov ah,1
+          int 21h
+          ret
+
+Sortf:                     ;排序
+      call cls
+      mov bx,1
+      call Sortff
+      mov bx,3
+      call Sortff
+      mov bx,5
+      call Sortff
+      mov bx,10
+      call Sortff
+      call StudentOut
+      locate 5,41
+      Sout data1,Total
+      mov si,2
+      call ShowRankf
+      mov si,4
+      call ShowRankf
+      mov si,6
+      call ShowRankf
+      mov si,9
+      call ShowRankf
+      locate 16,0
+      mov ah,01h
+      int 21h
+      ret
+
+Search1f:                      ;查找学生成绩和排名信息
+        call LocateStudent
+        call ShowSingal
+        locate 6,10
+        Sout data1,Score1
+        locate 7,10
+        Sout data1,Rank
+        locate 7,20
+        add si,2
+        call ShowSingalRank
+        locate 7,29
+        add si,2
+        call ShowSingalRank
+        locate 7,35
+        add si,2
+        call ShowSingalRank
+        locate 7,44
+        add si,3
+        call ShowSingalRank
+        locate 8,0
+        mov ah,1
+        int 21h
+        ret
+
+
+ShowSingal:
+        call cls
+        locate 5,18
+        Sout data1,Chinese
+        locate 5,27
+        Sout data1,Math
+        locate 5,33
+        Sout data1,English
+        locate 5,42
+        Sout data1,Total
+        locate 6,20
+        mov al,[si+1]
+        call ShowSingalScore
+        locate 6,29
+        mov al,[si+3]
+        call ShowSingalScore
+        locate 6,35
+        mov al,[si+5]
+        call ShowSingalScore
+        locate 6,44
+        mov ax,[si+7]
+        call Showhundreddata
+        ret
+
+ShowSingalScore:
+         cmp al,100
+         jnb ShowSingalScoref
+         call ShowSocreff
+         Sout data1,buffer1
+         jmp exitshowsingalscore
+ShowSingalScoref:
+         call Showhundreddata
+         Sout  data1,buffer1
+exitshowsingalscore:
+         call Cleanbuffer
+         ret
+
+
+
+LocateStudent:                     ;输入学生编号，定位学生
+        call cls
+        mov ax,data2
+        mov ds,ax
+        locate 5,20
+        Sout data1,LocateStudent1
+        mov ah,1
+        int 21h
+        sub al,30h
+        mov ah,0
+        mov cl,10h
+        mul cl
+        lea si,student0
+        add si,ax
+        ret
+
+
+
+Search2f:                         ;查找不及格学生名单
+        call cls
+        mov ax,data2
+        mov ds,ax
+        locate 0,8
+        Sout data1,Search2f1
+        mov bl,1
+        lea si,student0
+        mov cx,10
+loopsearch2:
+        mov bp,1
+        mov al,ds:[bp+si]
+        cmp al,60
+        jb output
+
+        add bp,2
+        mov al,ds:[bp+si]
+        cmp al,60
+        jb output
+
+        add bp,2
+        mov al,ds:[bp+si]
+        cmp al,60
+        jb output 
+        jmp toloopsearch2
+
+output: 
+        mov bp,0
+        mov dl,ds:[bp+si]
+        locate bl,16
+        Sout data1,student
+        mov ah,02h
+        int 21h
+        inc bl
+toloopsearch2:
+        add si,16
+        loop loopsearch2
+        mov ah,1
+        int 21h
+        ret
+
+
+SingalDataAveragef:
+         call SubjectMenu
+         call choose
+         cmp al,31h
+         jz ChineseAverage
+         cmp al,32h
+         jz MathAverage
+         cmp al,33h
+         jz EnglishAverage
+         jmp Statistics
+ChineseAverage:
+          mov si,1
+          call cls
+          locate 6,10
+          Sout data1,ChineseAverage1
+          call SingalDataAverageff
+          jmp exitSingal
+MathAverage:
+          mov si,3
+          call cls
+          locate 6,10
+          Sout data1,MathAverage1
+          call SingalDataAverageff
+          jmp exitSingal
+EnglishAverage:
+          mov si,5
+          call cls
+          locate 6,10
+          Sout data1,EnglishAverage1
+          call SingalDataAverageff
+exitSingal: 
+         ret
+
+SingalDataAverageff:
+          call Cleanbuffer
+          mov ax,data2
+          mov ds,ax
+          lea bx,student0
+          mov cx,10
+          mov ax,0
+          mov dx,0
+loopSingalData:
+          mov al,byte ptr [bx+si]
+          add dx,ax
+          add bx,16
+          loop loopSingalData
+         
+          mov ax,dx
+          mov cl,10
+          div cl
+          lea bx,statisticsdata
+          mov [bx+si],al
+
+          call ShowSocreff
+          locate 7,25
+          Sout data1,buffer1
+          mov ah,1
+          int 21h
+          ret
+
+
+AllDatef:                       ;求总成绩评价值
+          call cls
+          mov si,7
+          mov ax,data2
+          mov ds,ax
+          lea bx,student0
+          mov cx,10
+          mov ax,0
+          mov dx,0
+loopAllData:
+          mov ax,[bx+si]
+          add dx,ax
+          add bx,16
+          loop loopAllData
+
+          mov ax,dx
+          mov dx,0
+          mov cx,10
+          div cx
+          lea bx,statisticsdata
+          mov [bx+si],ax
+
+          cmp ax,100
+          jnb AllDatehundred
+          call ShowSocreff
+
+          jmp exitalldata
+AllDatehundred:
+          call Showhundreddata
+exitalldata:
+          locate 6,10
+          Sout data1,AllDate1
+          locate 7,25
+          Sout data1,buffer1
+          mov ah,1
+          int 21h
+          ret
+
+SingalDataf:                ;单科成绩的分布
+         call SubjectMenu
+         call choose
+         cmp al,31h
+         jz ChineseSection
+         cmp al,32h
+         jz MathSection
+         cmp al,33h
+         jz EnglishSection
+         jmp Statistics
+ChineseSection:
+          mov si,1
+          call SingalDataff
+          jmp exitSingalDataf
+MathSection:
+          mov si,3
+          call SingalDataff
+          jmp exitSingalDataf
+EnglishSection:
+          mov si,5
+          call SingalDataff
+exitSingalDataf:
+          locate 7,0
+          mov ah,1
+          int 21h
+          ret
+
+
+SingalDataff:               
+          call cls
+          mov ax,data2
+          mov ds,ax
+          lea bp,student0
+          mov cx,10
+          mov ax,0030h
+          mov bx,3030h
+          mov dx,3030h
+loopSingalDataff:
+          mov ah,ds:[bp+si]
+          cmp ah,60
+          jnb up60
+          inc al
+          jmp loopSingalDatafff
+up60:     
+          cmp ah,70
+          jnb up70
+          inc bh
+          jmp loopSingalDatafff
+up70:    
+          cmp ah,80 
+          jnb up80
+          inc bl
+          jmp loopSingalDatafff
+up80:    
+          cmp ah,90
+          jnb up90
+          inc dh
+          jmp loopSingalDatafff
+          up90:     
+          inc dl
+loopSingalDatafff:
+          add bp,16
+          loop loopSingalDataff
+          push bx
+          locate 5,15
+          Sout data1,ScoreSelation
+          push ax
+          locate 6,47
+          int 21h
+
+          locate 6,16
+          pop ax
+          mov dl,al
+          int 21h
+         
+          locate 6,23
+          pop bx
+          mov dl,bh
+          int 21h
+
+          mov dl,bl
+          locate 6,31
+          int 21h
+
+          locate 6,39
+          mov dl,dh
+          int 21h
+
+          ret
+
+Save:            ;将缓冲区的字符转化为整形存储在内存中，计算总成绩和平均成绩      
+      push cx
+      push ax
+      push dx
+      push bx
+
+      mov di,dx          
+      sub al,2fh
+      mov bl,10h
+      mul bl
+      mov bx,ax              ;计算偏移量
+      
+      inc di
+      mov cl,[di]
+      inc di
+      
+      cmp cx,1
+      jz one                ;一位数操作
+      cmp cx,3 
+      jz hundred             ;三位数操作
+
+      mov cl,10
+      mov al,[di]
+      sub al,30h
+      mul cl
+      add al,[di+1]
+      sub al,30h
+      
+      mov byte ptr [bx+si],al
+      jmp exitsave
+one:  
+      mov al,[di]
+      sub al,30h
+      mov byte ptr [bx+si],al
+      jmp exitsave
+hundred:
+      mov al,64h
+      mov byte ptr [bx+si],al
+exitsave:
+      
+      add word ptr [bx+7],ax
+      cmp si,5
+      jnz exitsave1
+      mov ax,[bx+7]
+      mov cl,3
+      div cl
+      mov byte ptr [bx+10],al
+exitsave1:      
+      pop bx
+      pop dx
+      pop ax
+      pop cx
+      ret
+
+Sortff:                               ;给成绩排序 
+        mov ax,data2
+        mov ds,ax
+        lea si,student0
+        mov di,si
+        mov cx,10           
+loopsort1:
+        mov ah,1
+        push cx
+        mov cx,10
+loopsort2:  
+        mov al,[bx+si]
+        cmp al,[bx+di]
+        jb incah
+        jmp adddi
+incah:  inc ah        
+adddi:  add di,16        
+        loop loopsort2
+        pop cx
+        cmp bx,10
+        jz subah
+        mov byte ptr [bx+1+si],ah
+        jmp addsi
+subah:  mov byte ptr [bx+si-1],ah      
+addsi:  add si,16
+        lea di,student0
+        loop loopsort1
+        ret
+
+
+ShowRankf:                         ;显示所有排名
+       mov ax,data2
+       mov ds,ax
+       mov bl,6
+       lea bp,student0
+       mov cx,10
+loopRank:
+       mov dl,ds:[bp+si]
+       cmp dl,10
+       jz outten
+
+       add dl,30h
+       mov ah,02h
+       call Locates
+       int 21h
+       jmp nextRank
+outten:
+       call Locates
+       mov dl,31h
+       mov ah,02h
+       int 21h
+       mov dl,30h
+       mov ah,02h
+       int 21h
+
+nextRank:
+       add bp,16
+       inc bl
+       loop loopRank
+       ret
+
+ShowSingalRank:            ;显示个人排名
+       mov ax,data2
+       mov ds,ax
+       mov dl,[si]
+       cmp dl,10
+       jz outten1
+
+       add dl,30h
+       mov ah,02h
+       int 21h
+       jmp exitshowsingalrank
+outten1:
+       mov dl,31h
+       mov ah,02h
+       int 21h
+       mov dl,30h
+       mov ah,02h
+       int 21h
+       exitshowsingalrank:
+       ret
+
+
+
+
+
+Clean:                         ;清除缓冲区
+        push cx
+        push si
+        lea dx,buffer
+        lea si,buffer
+        mov cx,10h
+loopcls:
+        mov byte ptr [si],24h
+        inc si
+        loop loopcls
+        pop si
+        pop cx
+        ret
+
+
+MainMenu:                            ;输出选择菜单
+       call cls
+       locate 4,8
+       Sout data1,MainMenu1
+       locate 5,10
+       Sout data1,MainMenu2
+       locate 7,16
+       Sout data1,MainMenu3
+       locate 8,16
+       Sout data1,MainMenu4
+       locate 9,16
+       Sout data1,MainMenu5
+       locate 10,16
+       Sout data1,MainMenu6
+       locate 11,0
+       ret
+
+ModifyMenu:
+       call cls
+       locate 4,2
+       Sout data1,SearchMenu1
+       locate 6,12
+       Sout data1,ModifyMenu1
+       locate 7,12
+       Sout data1,ModifyMenu2
+       locate 8,12
+       Sout data1,ModifyMenu3
+       locate 9,0
+       ret
+       
+SearchMenu: 
+       call cls
+       locate 4,2
+       Sout data1,SearchMenu1
+       locate 6,12
+       Sout data1,SearchMenu2
+       locate 7,12
+       Sout data1,SearchMenu3
+       locate 8,0
+       ret
+
+StatisticsMenu:
+       call cls
+       locate 4,2
+       Sout data1,SearchMenu1
+       locate 6,12
+       Sout data1,StatisticsMenu1
+       locate 7,12
+       Sout data1,StatisticsMenu2
+       locate 8,12
+       Sout data1,StatisticsMenu3
+       locate 9,0
+       ret
+
+SubjectMenu:
+        call cls
+        locate 4,2
+        Sout data1,SearchMenu1
+        locate 6,12
+        Sout data1,SelectChinese
+        locate 7,12
+        Sout data1,SelectMath
+        locate 8,12
+        Sout data1,SelectEnglish
+        locate 9,0
+        ret
+
+choose:
+       mov ah,01
+       int 21h
+       ret
+
+StudentOut:                  ;输出所有学生编号
+        call cls
+        locate 5,18
+        Sout data1,Chinese
+        locate 5,27
+        Sout data1,Math
+        locate 5,33
+        Sout data1,English
+        mov al,30h
+        mov bl,6
+        mov cx,0ah
+loopShowInsert:
+        
+        NumOut
+        inc al
+        inc bl
+        loop loopShowInsert
+        ret
+
+
+ShowSocreff:
+       mov bx,data1
+       mov es,bx
+       lea di,buffer1+2
+       mov dl,10
+loopdivf:  
+       mov ah,0   
+       div dl
+       dec di
+       add ah,30h
+       mov es:[di],ah
+       cmp al,0
+       jnz loopdivf
+       ret
+
+Showhundreddata:
+       mov bx,data1
+       mov es,bx
+       lea di,buffer1+3
+       mov dl,10
+loopdivff:  
+       div dl
+       dec di
+       add ah,30h
+       mov es:[di],ah
+       mov ah,0   
+       cmp al,0
+       jnz loopdivff
+       ret
+
+
+
+Locates:        ;给输出的排名定位
+        cmp si,2
+        jnz x27
+        locate bl,18
+        jmp exitLocates
+x27:
+        cmp si,4
+        jnz x35
+        locate bl,27
+        jmp exitLocates
+x35:
+        cmp si,6
+        jnz x41
+        locate bl,35        
+        jmp exitLocates
+x41:   
+        locate bl,41
+        exitLocates:
+        ret
+
+Location:        ;给输出的成绩定位
+        cmp si,1
+        jnz y27
+        locate bl,18
+        jmp exitLocation
+y27:
+        cmp si,3
+        jnz y35
+        locate bl,27
+        jmp exitLocation
+        y35:
+        locate bl,35        
+        exitLocation:
+        ret
+
+
+cls:
+    scroll 0,0,0,24,79,02
+    ret
+
+
+code ends
+end start
